@@ -75,3 +75,10 @@ POB requires the latest release of Forge (6.6.1 as of this writing) and the late
 release of Minecraft (1.4.7 as of this writing). I intend to keep it
 updated as soon as possible whenever Forge and/or Minecraft updates,
 depending on my online activities. 
+
+POB has been tested against tekkitlite + BlockPhysics as well as a large range of other mods (UndergroundBiomes, BiomesXL, ...). 
+
+License
+=======
+
+POB is OpenSource and is released under the GPLv3 Licesens. 
