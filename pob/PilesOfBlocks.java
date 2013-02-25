@@ -38,8 +38,10 @@ import net.minecraft.item.Item;
 import net.minecraftforge.common.Configuration;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.Property;
+import java.util.Dictionary;
+import java.util.Hashtable;
 
-@Mod(modid = "PilesOfBlocks", name = "PilesOfBlocks", version = "0.1.0")
+@Mod(modid = "PilesOfBlocks", name = "PilesOfBlocks", version = "0.1.1")
 @NetworkMod(clientSideRequired = true, serverSideRequired = false)
 public class PilesOfBlocks {
 	// Singleton instance of mod class instansiated by Forge
@@ -60,12 +62,22 @@ public class PilesOfBlocks {
 	public static int defaultMaxPopTime = 60;
 	public static boolean printBlockItemInfo = false;
 
-	public static BlockItemSetting blockItemSettings[] = new BlockItemSetting[256];
-	public static int nBigBlockItemSettings;
+	//public static BlockItemSetting blockItemSettings[] = new BlockItemSetting[256];
+	public static Dictionary<Integer,BlockItemSetting> blockItemSettings = new Hashtable<Integer,BlockItemSetting>();	
 
 	private static Configuration config;
 	private static Logger logger;
 
+	class Rule {
+		String blockName;
+		int metaData;
+		int stackSize;
+		int minPopTime;
+		int maxPopTime;
+	}
+	private static Rule rules[] = new Rule[256];
+	private int nRules;
+	
 	@PreInit
 	public void preInit(FMLPreInitializationEvent event) {
 		logger = event.getModLog();
@@ -117,56 +129,75 @@ public class PilesOfBlocks {
 		defaultMaxPopTimeProp.comment = "The default minimum time (in ticks) before an itemstack matched by the rules will pop-out to become a block";
 		defaultMaxPopTime = defaultMaxPopTimeProp.getInt(20);
 
-		nBigBlockItemSettings = 0;
-
-		if (printBlockItemInfo)
-			for (Block b : Block.blocksList) {
-				if (b != null && b.getBlockName() != null)
-					logger.log(Level.FINEST, "Block " + b.getBlockName()
-							+ " found");
-			}
-
-		for(int rule=0;rule<256;rule++) {
+		for(nRules=0;nRules<256;) {
 			Property nameProp = config.get(ConfigCategory_Blocks, "B"
-					+ rule + "_Name", "");
+					+ nRules + "_Name", "");
 			Property metaDataProp = config.get(ConfigCategory_Blocks, "B"
-					+ rule + "_MetaData", "");
+					+ nRules + "_MetaData", "");
 			Property stackSizeProp = config.get(ConfigCategory_Blocks, "B"
-					+ rule  + "_MaxStackSize", "");
+					+ nRules  + "_MaxStackSize", "");
 			Property minPopTimeProp = config.get(ConfigCategory_Blocks, "B"
-					+ rule + "_MinPopTime", "");
+					+ nRules + "_MinPopTime", "");
 			Property maxPopTimeProp = config.get(ConfigCategory_Blocks, "B"
-					+ rule + "_MaxPopTime", "");
+					+ nRules + "_MaxPopTime", "");
 
 			if (nameProp == null || nameProp.value.equals(""))
 				break;
+			
+			Rule r = new Rule();
+			r.blockName = nameProp.value;
+			if(metaDataProp.value == "") r.metaData = -2;
+			else r.metaData = metaDataProp.getInt(-2);
+			if(stackSizeProp.value == "") r.stackSize = -2;
+			else r.stackSize = stackSizeProp.getInt(-2);
+			if(minPopTimeProp.value == "") r.minPopTime = -2;
+			else r.minPopTime = minPopTimeProp.getInt(-2);
+			if(maxPopTimeProp.value == "") r.maxPopTime = -2;
+			else r.maxPopTime = maxPopTimeProp.getInt(-2);
+			rules[nRules++] = r;
+		}
 
+		System.out.println("Finished loading settings, "+nRules+" rules found");
+		config.save();
 
-			for (Block b : Block.blocksList) {				
-				if (b != null && b.getBlockName() != null
-						&& b.getBlockName().matches(nameProp.value)) {
-					logger.log(Level.INFO, "Block " + b.getBlockName()
-							+ " matches rule #" + nBigBlockItemSettings + " "
-							+ nameProp.value);
-					
-					BlockItemSetting bs = new BlockItemSetting();
-					blockItemSettings[nBigBlockItemSettings] = bs;
-					bs.name = nameProp.value;
-					bs.blockID = -1;
-					nBigBlockItemSettings++;
-					
-					bs.blockID = b.blockID;
-					if (metaDataProp.value.equals(""))
-						bs.metaData = defaultMetaData;
-					else
-						bs.metaData = metaDataProp.getInt(defaultMetaData);
-					if (stackSizeProp.value.equals("")) bs.stackSize = defaultStackSize;
-					else bs.stackSize = stackSizeProp.getInt(defaultStackSize);
-					if (minPopTimeProp.value.equals("")) bs.minPopTime = defaultMinPopTime;
-					else bs.minPopTime = minPopTimeProp.getInt(defaultMinPopTime);
-					if (maxPopTimeProp.value.equals("")) bs.maxPopTime = defaultMaxPopTime;
-					else bs.maxPopTime = minPopTimeProp.getInt(defaultMaxPopTime);
-					
+		eventListener = new EventListener();
+		MinecraftForge.EVENT_BUS.register(eventListener);
+	}
+
+	@PostInit
+	public void postInit(FMLPostInitializationEvent event) {
+		if (printBlockItemInfo)
+			for (Block b : Block.blocksList) {
+				if (b != null && b.getBlockName() != null)
+					logger.log(Level.FINEST, "Block #" + b.blockID + " " + b.getBlockName()
+							+ " found");
+			}
+
+		for (Block b : Block.blocksList) {				
+			if (b != null && b.getBlockName() != null) {
+				boolean hasRule=false;
+				BlockItemSetting bs = new BlockItemSetting();
+				bs.metaData = defaultMetaData;
+				bs.stackSize = defaultStackSize;
+				bs.minPopTime = defaultMinPopTime;
+				bs.maxPopTime = defaultMaxPopTime;
+				bs.blockID = b.blockID;
+				
+				for(int i=0;i<nRules;i++) {
+					Rule r=rules[i];
+					if(b.getBlockName().matches(r.blockName)) {
+						hasRule=true;
+						if(r.metaData != -2) bs.metaData = r.metaData;
+						if(r.stackSize != -2) bs.stackSize = r.stackSize;
+						if(r.minPopTime != -2) bs.minPopTime = r.minPopTime;
+						if(r.maxPopTime != -2) bs.maxPopTime = r.maxPopTime;
+						if (printBlockItemInfo)
+							logger.log(Level.FINEST,"Applying rule #"+i+" to "+b.getBlockName());
+					}
+				}
+				if(hasRule) {
+					blockItemSettings.put(b.blockID, bs);
+
 					// Find the corresponding item
 					boolean found = false;
 					for (Item i : Item.itemsList) {
@@ -186,27 +217,10 @@ public class PilesOfBlocks {
 						System.out
 								.println("Could not find any item with itemID="
 										+ (b.blockID));
-					}
-				}
-				
+					}					
+				}				
+			
 			}
-/*			if (bigBlockItemSettings[nBigBlockItemSettings].blockID == -1) {
-				logger.log(Level.WARNING, "failed to find block named: "
-						+ nameProp.value);
-			}
-			*/
 		}
-
-		System.out.println("Finished loading settings!");
-		config.save();
-
-		eventListener = new EventListener();
-		MinecraftForge.EVENT_BUS.register(eventListener);
-
 	}
-
-	@PostInit
-	public void postInit(FMLPostInitializationEvent event) {
-	}
-
 }

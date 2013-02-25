@@ -1,0 +1,11 @@
+2013-02-24:	
+		- First initial release (v0.1.0)
+
+2013-02-25:	
+		- Improved lookup of block rules using a dictionary for speed. 
+		- Added mcmod.info file
+		- Separated parsing of rules (in load section) and
+		application of the rules (in post section). Will now
+		work better with other mods that are loaded after this
+		mod.  
+		- Setting internal version to v0.1.1

@@ -33,20 +33,13 @@ public class EventListener {
 		if (PilesOfBlocks.printBlockItemInfo) {
 			ItemStack itemStack = event.item.getEntityItem();
 			event.entityPlayer
-					.addChatMessage("[BigBlocks.cfg]: You have picked an item with name:"
+					.addChatMessage("[PilesOfBlocks]: You have picked an item with name:"
 							+ itemStack.getItem().getItemName());
 		}
 	}
 
 	private BlockItemSetting lookupSetting(int itemID) {
-		BlockItemSetting bbis = BlockItemSetting.nullSetting;
-		int i;
-		for (i = 0; i < PilesOfBlocks.nBigBlockItemSettings; i++)
-			if (PilesOfBlocks.blockItemSettings[i].blockID == itemID) {
-				bbis = PilesOfBlocks.blockItemSettings[i];
-				break;
-			}
-		return bbis;
+		return PilesOfBlocks.blockItemSettings.get(itemID);
 	}
 
 	@ForgeSubscribe
@@ -56,8 +49,7 @@ public class EventListener {
 		// See if this item corresponds to a block item that we are supposed to
 		// handle
 		BlockItemSetting bbis = lookupSetting(eitem.getEntityItem().itemID);
-		if (bbis == BlockItemSetting.nullSetting)
-			return;
+		if (bbis == null) return;
 
 		int x = (int) Math.round(eitem.posX - 0.5);
 		int y = (int) (eitem.posY + 0.0); // was + 0.5
@@ -103,8 +95,7 @@ public class EventListener {
 			int itemID = stack.itemID;
 			//System.out.println("Item " + itemID + " " + stack.getItemName() + " entering chunk.");
 			BlockItemSetting bbis = lookupSetting(itemID);
-			if (bbis == BlockItemSetting.nullSetting)
-				return;
+			if (bbis == null) return;
 			eitem.delayBeforeCanPickup = Math.min(eitem.delayBeforeCanPickup,
 					bbis.maxPopTime - 10);
 			eitem.lifespan = Math.max(bbis.minPopTime,
