@@ -31,9 +31,11 @@ import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.network.NetworkMod;
+import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.common.registry.LanguageRegistry;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.material.Material;
 import net.minecraft.item.Item;
 import net.minecraftforge.common.Configuration;
 import net.minecraftforge.common.MinecraftForge;
@@ -74,7 +76,8 @@ public class PilesOfBlocks {
 		int stackSize;
 		int minPopTime;
 		int maxPopTime;
-	}
+	};
+	
 	private static Rule rules[] = new Rule[256];
 	private int nRules;
 	
@@ -161,7 +164,7 @@ public class PilesOfBlocks {
 		config.save();
 
 		eventListener = new EventListener();
-		MinecraftForge.EVENT_BUS.register(eventListener);
+		MinecraftForge.EVENT_BUS.register(eventListener);		
 	}
 
 	@PostInit

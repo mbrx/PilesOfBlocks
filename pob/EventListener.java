@@ -71,8 +71,10 @@ public class EventListener {
 										eitem.getEntityItem().itemID,
 										bbis.metaData);
 							else
-								world.setBlockWithNotify(x + dx, y + dy,
-										z + dz, eitem.getEntityItem().itemID);
+								/*world.setBlockWithNotify(x + dx, y + dy,
+										z + dz, eitem.getEntityItem().itemID);*/
+								world.setBlockAndMetadataWithNotify(x + dx, y + dy,
+										z + dz, eitem.getEntityItem().itemID, eitem.getEntityItem().getItemDamage());
 
 							num--;
 						}
