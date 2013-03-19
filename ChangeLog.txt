@@ -9,3 +9,7 @@
 		work better with other mods that are loaded after this
 		mod.  
 		- Setting internal version to v0.1.1
+
+2013-03-20:	
+		- Changed how metadata is computed for blocks with "default" meta data state. Now uses the item damage as meta-data value. 
+		- Released as version v0.1.1
